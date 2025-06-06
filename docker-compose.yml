@@ -1,0 +1,67 @@
+#defines a block called services (our containers)
+services:
+
+  #defines de backend service (container)
+  backend:
+    container_name: backend_flask #name of our container
+    build: ./backend #use our dockerfile found in /backend to build the image
+    ports:
+      - 9004:5000 #define ports host_ports:container_ports
+    volumes:
+      - ./backend:/app #defines a volume so the containers files change when we do modification on our machine host_volume:container_volume
+    depends_on:
+      mysql:
+        condition: service_healthy #defines that the service should start only if the mysql service gives us a service_healthy check
+    networks:
+      - todo_app_network #connects our service to the todo_app_network network
+
+  frontend:
+    container_name: frontend_react #name of our container
+    build: ./frontend #use our dockerfile found in /frontend to build the image
+    ports:
+      - 9002:5173 #define ports host_ports:container_ports
+    volumes:
+      - ./frontend:/app #defines a volume so the containers files change when we do modification on our machine host_volume:container_volume
+    depends_on:
+      - backend #waits for the backend service in order to start
+    networks:
+      - todo_app_network #connects our service to the todo_app_network network
+
+  mysql:
+    image: mysql:9.3.0 #get myssql image from dockerhub
+    container_name: mysql #name of our container
+    restart: always
+    environment:
+      - MYSQL_HOST=mysql #define mysql_host environment variable to mysel
+      - MYSQL_ROOT_PASSWORD=1234 #define mysql_rool_password environement variable to 1234
+    volumes:
+      - ./dockerData/mysql:/var/lib/mysql #defines a volume so the containers files change when we do modification on our machine host_volume:container_volume
+    ports:
+      - 9000:3306 #define ports host_ports:container_ports
+    healthcheck: #setup a healthcheck test
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"] #defines the command to run
+      interval: 10s #set the interval to 10secs
+      timeout: 5s #set the timeout to 5secs
+      retries: 5 #set the numbers of retries to 5
+    networks:
+      - todo_app_network #connects our service to the todo_app_network network
+
+  PHPMyAdmin:
+    image: phpmyadmin:5.2.2 #get phpmyadmin from dockerhub
+    container_name: phpmyadmin #name of our container
+    restart: always
+    environment:
+      - PMA_HOST=mysql #define pma_host environment variable to mysql (mysql host name being the name of our container)
+    ports:
+      - 9001:80 #define ports host_ports:container_ports
+    networks:
+      - todo_app_network #connects our service to the todo_app_network network
+    depends_on:
+      mysql:
+        condition: service_healthy #defines that the service should start only if the mysql service gives us a service_healthy check
+
+#new section to define the network
+networks:
+    todo_app_network: 
+      name: todo_app_network #name of the network
+      driver: bridge #we want a bridge

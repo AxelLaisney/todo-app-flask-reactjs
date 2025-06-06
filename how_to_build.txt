@@ -1,0 +1,4 @@
+move in the todo-app-flasj-reactjs folder
+type docker-compose up
+it will build all images but the frontend container won't start and I don't know why
+The rest seems to work finee, can acces the data base with phpmyadmin with user: root and password: 1234
